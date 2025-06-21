@@ -47,8 +47,8 @@ final class ObservableModel {
     var currentValue: ChannelMessage?
 }
 ```
-_See [ModernConcurrency/Observable/ObservableView.swift](ObservableView.swift) and 
-[ModernConcurrency/Observable/ObservableModel.swift](ObservableModel.swift)_
+_See [ObservableView.swift](ModernConcurrency/Observable/ObservableView.swift) and 
+[ObservableModel.swift](ModernConcurrency/Observable/ObservableModel.swift)_
 
 It's the way `@Observable` has been working since it's introduction. This works really well for anything you bind directly to a View, but it was pretty limited until the Xcode 26 Beta.
 
@@ -76,8 +76,8 @@ class ObservableViewModel {
 }
 ```
 
-_See [ModernConcurrency/Observable/ObservableViewModel.swift](ObservableViewModel.swift) and 
-[ModernConcurrency/Observable/ObservableViewModelView.swift](ObservableViewModelView.swift)_
+_See [ObservableViewModel.swift](ModernConcurrency/Observable/ObservableViewModel.swift) and 
+[ObservableViewModelView.swift](ModernConcurrency/Observable/ObservableViewModelView.swift)_
 
 Still it was not possible to do anything else than this. If you wanted to have an `AsyncChannel` so functions like throttling could be applied, you needed to do this manually.
 
@@ -103,7 +103,7 @@ class FunctionsPublisher {
     }
 }
 ```
-_See [ModernConcurrency/Functions/FunctionsPublisher.swift](FunctionsPublisher.swift)_
+_See [FunctionsPublisher.swift](ModernConcurrency/Functions/FunctionsPublisher.swift)_
 
 While the `@Published`-to-`AnyPublisher` ergonomics of Combine already left something to be desired, this is even more complicated because of Strict Concurrency limitations.
 
@@ -125,8 +125,8 @@ override func viewWillLayoutSubviews() {
     messageLabel.text = model.text
 }
 ```
-_See [ModernConcurrency/Observable/ObservableLegacyViewController.swift](ViewController.swift) and 
-[ModernConcurrency/Observable/ObservableLegacyViewControllerWrapper.swift](ViewControllerWrapper.swift)_
+_See [ViewController.swift](ModernConcurrency/Observable/ObservableLegacyViewController.swift) and 
+[ViewControllerWrapper.swift](ModernConcurrency/Observable/ObservableLegacyViewControllerWrapper.swift)_
 
 This, together with other updates on `@Observable` is huge and makes it really interesting to start to move off Combine in earnest starting iOS 18
 
@@ -146,7 +146,7 @@ for await name in names {
     self.messageLabel1.text = name
 }
 ```
-_See [ModernConcurrency/Observable/ObservationsLegacyViewController.swift](ObservationsLegacyViewController.swift)_
+_See [ObservationsLegacyViewController.swift](ModernConcurrency/Observable/ObservationsLegacyViewController.swift)_
 
  It also allows you to do everything you could do with a `Sequence`, including throttle and debounce:
 
@@ -186,7 +186,7 @@ class ObservableViewModel {
     }
 }
 ```
-_See [ModernConcurrency/Observable/ObservableViewModel.swift](ObservableViewModel.swift)_
+_See [ObservableViewModel.swift](ModernConcurrency/Observable/ObservableViewModel.swift)_
 
 The great thing about it, is that `observedText` can not be mutated and does not expose a function like `send()`, meaning it's very well encapsulated. In that regard, it's the `@Observable` equivalent of wrapping a `@Published` property in an `AnyPublisher` in Combine.
 
@@ -236,8 +236,8 @@ struct SingleChannelConsumerView: View {
 }
 ```
 _See 
-[ModernConcurrency/Channels/SingleChannelPublisher.swift](SingleChannelPublisher.swift) and 
-[ModernConcurrency/Channels/SingleChannelConsumerView.swift](SingleChannelConsumerView.swift)_
+[SingleChannelPublisher.swift](ModernConcurrency/Channels/SingleChannelPublisher.swift) and 
+[SingleChannelConsumerView.swift](ModernConcurrency/Channels/SingleChannelConsumerView.swift)_
 
 This is a nice pattern to use when you want to communicate changes without being bound to the limitations of `@Observable`, or don't want mutable fields on the emitting instance at all.
 
@@ -281,7 +281,7 @@ struct MultiChannelFailConsumerView: View {
     }
 }
 ```
-_See [ModernConcurrency/Channels/MultiChannelFailConsumerView.swift](MultiChannelFailConsumerView.swift)_
+_See [MultiChannelFailConsumerView.swift](ModernConcurrency/Channels/MultiChannelFailConsumerView.swift)_
 
 As soon as you start listening from multiple Views, you will notice that it starts behaving in an unexpected way: the received messages will alternate between the tasks, because every `await` on the channel blocks it until it receives a message.
 
@@ -306,8 +306,8 @@ var body: some View {
 }
 ```
 _See 
-[ModernConcurrency/Channels/MultiCastPublisher.swift](MultiCastPublisher.swift) and 
-[ModernConcurrency/Channels/MultiCastConsumerView.swift](MultiCastConsumerView.swift)_
+[MultiCastPublisher.swift](ModernConcurrency/Channels/MultiCastPublisher.swift) and 
+[MultiCastConsumerView.swift](ModernConcurrency/Channels/MultiCastConsumerView.swift)_
 
 A strange omission in the otherwise complete Async Algorithms package, I've built this myself, using a `weak`ly retained `Array` of `AsyncChannel`s
 
@@ -346,7 +346,7 @@ class AsyncMulticast<Element: Sendable>: AsyncMulticasting {
     }
 }
 ```
-_See [ModernConcurrency/Channels/AsyncMulticast.swift](AsyncMulticast.swift)_
+_See [AsyncMulticast.swift](ModernConcurrency/Channels/AsyncMulticast.swift)_
 
 ### Debounce, Throttle and Other Async Algorithms Functions
 `AsyncChannel`s support often-used functions like throtltle and debounce as well:
@@ -393,8 +393,8 @@ struct ThrottleView: View {
     }
 }
 ```
-_See [ModernConcurrency/Functions/FunctionsPublisher.swift](FunctionsPublisher.swift) and 
-[ModernConcurrency/Functions/ThrottleView.swift](ThrottleView.swift)_
+_See [FunctionsPublisher.swift](ModernConcurrency/Functions/FunctionsPublisher.swift) and 
+[ThrottleView.swift](ModernConcurrency/Functions/ThrottleView.swift)_
 
 `AsyncChannel` and `AsyncSequence` are more or less equivalent in this regard. When dealing with State on `@MainActor`, `@Observable` and `AsyncSequence` are the best choices in almost any scenario. But when we need to be able to communicate between Actors, need backpressure or buffering `AsyncChannel`s are a great choice.
 
