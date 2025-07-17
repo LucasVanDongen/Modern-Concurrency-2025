@@ -50,6 +50,7 @@ class ObservableLegacyViewController: UIViewController {
     override func viewWillLayoutSubviews() {
         super.viewWillLayoutSubviews()
 
+
         messageLabel.text = model.text
     }
 

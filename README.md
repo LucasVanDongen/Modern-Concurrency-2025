@@ -17,6 +17,10 @@ We'll discuss the following reactive programming patterns that are compatible wi
     * [**Single Channel, Multiple Consumers:**](#single-asyncchannel-with-multiple-consumers) Shows us how unexpercted it behaves when you have more than one listener
     * [**Multi Channel:**](#multiasyncchannel-example) If we give an `AsyncChannel` per listener, everything works for multicasts
     * [**Debounce and Throttle:**](#debounce-throttle-and-other-async-algorithms-functions) Example how debounce and throttle work for AsyncChannels
+* **iOS 16 Patterns:**
+    * [Unsafe `withCheckedThrowingContinuation`](#checked-continuation): Allows you to replace block-based API's that complete exactly once with async / await
+    * [`SafeContinuation`](#safe-continuation): A wrapper struct that allows API's that unexpectedly resume more than once to not crash but log instead
+    * [`AsyncThrowingStream`](#async-throwing-stream): When you do expect the completion to happen more than once, you should instead use `AsyncThrowingStream`
 
 
 ## Prerequisites
@@ -415,6 +419,71 @@ While enabling Strict Concurrency in large legacy apps is definitely a bridge to
 
 In my opinion, it's time to start defining the new patterns and practices you're going to work with right now, so you are ready by September
 
+## iOS 16 Patterns
+For those who will still be supporting iOS 16 for the time being (or for most of it, iOS 17), there are still plenty of things that you can to to start migrating towards safe patterns:
+
+### Easily Replaceable Combine Patterns
+If you pick the right Combine patterns, they are easily swapped by drop-in replacement Observability patterns later: https://developer.apple.com/documentation/swiftui/migrating-from-the-observable-object-protocol-to-the-observable-macro
+
+It's really that easy - just be prepared.
+
+### Migrating Block-based API's
+Blocks have quite a few downsides, like being the premier source of memory leaks in most apps. They are also hard to get to play nice with Swift Concurrency. We've identified the following three patterns you can start applying right now to deal with block-based API's:
+
+#### Checked Continuation
+This pattern is the one most people already discovered and might be using:
+
+```swift
+func process() async {
+    await withCheckedContinuation { continuation in
+        processor?.process() {
+            continuation.resume()
+        }
+    }
+}
+```
+
+This works very well in most cases, but one big difference between `async` functions and functions that call a block on complete is that _a block can be completed multiple times_, while if you call `resume()` twice, the app will crash!
+
+So in cases where the block-based API you are wrapping is very big, or when you know it's correct behavior that the completion block will be called more than once, you need to use other patterns.
+    
+#### Safe Continuation
+This is a wrapper struct that we have developed ourselves, that has the same API as a regular Continuation, but instead of crashing it will log the second call to our error logging system. We will use this in cases where we don't expect the completion to happen more than once, but are not completely sure it will not.
+
+```swift
+func process() async {
+    await withCheckedContinuation { continuation in
+        var safeContinuation = SafeContinuation(continuation: continuation, logger: TestLogger())
+        processor?.process() {
+            safeContinuation.resume()
+        }
+    }
+}
+```
+
+Note that it will not execute the second block, so if you for example implemented a completion on error and a completion on successful retry, you will miss the second one.
+
+#### Async Throwing Stream
+So if you do want to work with all completion calls that happen after the first, you need to return a Stream instead:
+
+```swift
+func buttonPressed() async throws {
+    for try await message in sendMessage() {
+        currentMessage = message
+    }
+}
+
+func sendMessage() -> AsyncThrowingStream<String, Error> {
+    AsyncThrowingStream { continuation in
+        model.sendMessage { result in
+            continuation.yield(with: result)
+        }
+    }
+}
+```
+
+This is very easy to implement, and back ports to ancient iOS versions as well (iOS 13 AFAIK).
+
 --------
 
 # Old / Not Implemented Yet
@@ -434,7 +503,7 @@ In my opinion, it's time to start defining the new patterns and practices you're
 
 ## Prerequisites - old
 
-At the time of writing Swift 6.2 was not part of Xcode yet.
+At the time of writing (Xcode 26 beta 1) Swift 6.2 was not part of Xcode yet.
 
 * **Download Swift 6.2:**: If this is not part of your Xcode install, you need to [download it](https://download.swift.org/swift-6.2-branch/xcode/swift-6.2-DEVELOPMENT-SNAPSHOT-2025-05-30-a/swift-6.2-DEVELOPMENT-SNAPSHOT-2025-05-30-a-osx.pkg) separately 
 * **Toolchain:** Follow instructions to select the default Toolchain system-wide:
